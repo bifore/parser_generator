@@ -49,6 +49,13 @@ string Config::get(string name, Node* node)
                 : get("default_type", node));
         value = replace_all(value, "{{type}}", type);
     }
+    if(value.find("{{shift}}") != string::npos)
+    {
+        string shift, indentation = get("indentation", node);
+        for(int i = 0; i < node->depth; ++i)
+            shift += indentation;
+        value = replace_all(value, "{{shift}}", shift);
+    }
     value = replace_all(value, "{{size}}", node->array_length);
     value = replace_all(value, "{{name}}", node->name);
     return value;

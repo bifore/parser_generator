@@ -13,7 +13,7 @@ using namespace std;
 void get_token(vector<string> &tokens, string file_path)
 {
     ifstream file(file_path.c_str());
-    string current_token = "";
+    string current_token;
     char c;
     while(file.get(c))
     {
@@ -45,7 +45,7 @@ void get_token(vector<string> &tokens, string file_path)
 Node* generateSyntaxTree(vector<string> &tokens)
 {
     Node* current_node = new Node();
-    string type = "";
+    string type;
     for(int i = 0; i < tokens.size(); ++i)
     {
         string token = tokens[i];
@@ -87,72 +87,77 @@ Node* generateSyntaxTree(vector<string> &tokens)
     return current_node;
 }
 
-void declare(Node* root, string ind, Config cfg)
+void declare(Node* root, Config cfg)
 {
     for(Node* node : root->children)
         if(node->children.size())
         {
-            cout << ind << cfg.get("struct_begin", node);
-            declare(node, ind + cfg.get("indentation", node), cfg);
-            cout << ind << cfg.get("struct_end", node);
+            cout << cfg.get("struct_begin", node);
+            declare(node, cfg);
+            cout << cfg.get("struct_end", node);
         }
     for(Node* node : root->children)
         if(node->name[0] != '_')
         {
             if(node->array_length.size())
-                cout << ind << cfg.get("array_declaration", node);
+                cout << cfg.get("array_declaration", node);
             else
-                cout << ind << cfg.get("var_declaration", node);
+                cout << cfg.get("var_declaration", node);
         }
 }
 
-void parser(Node * root, string prefix, char i, string ind, Config cfg)
+void parser(Node * root, string prefix, char i, Config cfg)
 {
     for(Node* node : root->children)
     {
         if(node->array_length.size())
         {
-            cout << ind << cfg.get("array_init", node, prefix);
-            cout << ind << cfg.get("loop_begin", node, i);
-            cout << ind << cfg.get("block_begin", node);
-            string n_ind = cfg.get("indentation", node);
+            cout << cfg.get("array_init", node, prefix);
+            cout << cfg.get("loop_begin", node, i);
             if(node->children.size())
             {
                 string new_prefix = cfg.get("array_element", node, i);
-                parser(node, prefix + new_prefix, i + 1, ind + n_ind, cfg);
+                parser(node, prefix + new_prefix, i + 1, cfg);
             }
             else
-                cout << ind + n_ind << cfg.get("fetch_array", node, prefix, i);
-            cout << ind << cfg.get("block_end", node);
+                cout << cfg.get("fetch_array", node, prefix, i);
+            cout << cfg.get("loop_end", node);
             continue;
         }
         if(node->name[0] == '_')
         {
-            cout << ind << cfg.get("var_declaration", node);
-            cout << ind << cfg.get("fetch_var", node);
+            cout << cfg.get("var_declaration", node);
+            cout << cfg.get("fetch_var", node);
             continue;
         }
         if(node->children.size())
         {
             string new_prefix = node->name + cfg.get("struct_element", node);
-            parser(node, prefix + new_prefix, i + 1, ind, cfg);
+            parser(node, prefix + new_prefix, i + 1, cfg);
         }
         else
-            cout << ind << cfg.get("fetch_var", node, prefix);
+            cout << cfg.get("fetch_var", node, prefix);
     }
+}
+
+void shift_tree_depth(Node* root)
+{
+    for(Node* child : root->children)
+        shift_tree_depth(child);
+    ++root->depth;
 }
 
 int main()
 {
-    Config cfg("cpp");
+    Config cfg("python");
     vector<string> tokens;
     get_token(tokens, "goal");
     Node* root = generateSyntaxTree(tokens);
     cout << cfg.get("include");
-    declare(root, "", cfg);
+    declare(root, cfg);
     cout << endl;
-    cout << cfg.get("main_func");
-    cout << cfg.get("block_begin");
-    parser(root, "", 'i', cfg.get("indentation"), cfg);
-    cout << cfg.get("block_end");
+    cout << cfg.get("main_func_begin");
+    shift_tree_depth(root);
+    parser(root, "", 'i', cfg);
+    cout << cfg.get("main_func_end");
 }

@@ -7,6 +7,7 @@
 struct Node
 {
     std::string name, type, array_length;
+    int depth;
     std::vector<Node*> children;
     Node* parent;
 
