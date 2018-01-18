@@ -5,22 +5,10 @@
 
 #include <ctype.h>
 
+#include "config.h"
+#include "node.h"
+
 using namespace std;
-
-struct Node
-{
-    string name, type, array_length;
-    vector<Node*> children;
-    Node* parent;
-
-    Node() {};
-    Node(string name, string type, Node* parent)
-    {
-        this->name = name;
-        this->type = type;
-        this->parent = parent;
-    };
-};
 
 void get_token(vector<string> &tokens, string file_path)
 {
@@ -31,7 +19,7 @@ void get_token(vector<string> &tokens, string file_path)
     {
         if(isspace(c))
         {
-            if(current_token.size() != 0)
+            if(current_token.size())
                 tokens.push_back(current_token);
             current_token = "";
             continue;
@@ -39,7 +27,7 @@ void get_token(vector<string> &tokens, string file_path)
         switch(c)
         {
             case '[': case ']': case '{': case '}': case ':':
-                if(current_token.size() != 0)
+                if(current_token.size())
                     tokens.push_back(current_token);
                 tokens.push_back(string(1, c));
                 current_token = "";
@@ -49,7 +37,7 @@ void get_token(vector<string> &tokens, string file_path)
                 break;
         }
     }
-    if(current_token.size() != 0)
+    if(current_token.size())
         tokens.push_back(current_token);
     file.close();
 }
@@ -62,10 +50,7 @@ Node* generateSyntaxTree(vector<string> &tokens)
     {
         string token = tokens[i];
         if(token == "{")
-        {
             current_node = current_node->children.back();
-            continue;
-        }
         else if(token == "}")
         {
             current_node = current_node->parent;
@@ -74,8 +59,6 @@ Node* generateSyntaxTree(vector<string> &tokens)
                 i += 3;
                 current_node->children.back()->array_length = tokens[i - 1];
             }
-            else
-                continue;
         }
         else if(tokens[i + 1] == ":")
         {
@@ -104,81 +87,72 @@ Node* generateSyntaxTree(vector<string> &tokens)
     return current_node;
 }
 
-void declare(Node* root, string ind)
+void declare(Node* root, string ind, Config cfg)
 {
     for(Node* node : root->children)
         if(node->children.size())
         {
-            cout << ind << "struct ";
-            cout << (node->type.size() ? node->type : "int");
-            cout << endl << ind << "{" << endl;
-            declare(node, ind + "    ");
-            cout << ind << "};" << endl;
+            cout << ind << cfg.get("struct_begin", node);
+            declare(node, ind + cfg.get("indentation", node), cfg);
+            cout << ind << cfg.get("struct_end", node);
         }
     for(Node* node : root->children)
         if(node->name[0] != '_')
         {
             if(node->array_length.size())
-            {
-                cout << ind << "vector<";
-                cout << (node->type.size() ? node->type : "int") << ">";
-            }
+                cout << ind << cfg.get("array_declaration", node);
             else
-                cout << ind << (node->type.size() ? node->type : "int");
-            cout << " " << node->name;
-            cout << ";" << endl;
+                cout << ind << cfg.get("var_declaration", node);
         }
 }
 
-void parser(Node * root, string prefix, char i, string ind)
+void parser(Node * root, string prefix, char i, string ind, Config cfg)
 {
     for(Node* node : root->children)
     {
         if(node->array_length.size())
         {
-            cout << ind << prefix << node->name << ".resize(";
-            cout << node->array_length << ");" << endl;
-            cout << ind << "for(int " << i << " = 0; " << i << " < ";
-            cout << node->array_length << "; ++" << i << ")";
-            cout << endl << ind << "{" << endl;
+            cout << ind << cfg.get("array_init", node, prefix);
+            cout << ind << cfg.get("loop_begin", node, i);
+            cout << ind << cfg.get("block_begin", node);
+            string n_ind = cfg.get("indentation", node);
             if(node->children.size())
             {
-                string new_prefix = node->name + "[" + to_string(i) + "].";
-                parser(node, prefix + new_prefix, i + 1, ind + "    ");
+                string new_prefix = cfg.get("array_element", node, i);
+                parser(node, prefix + new_prefix, i + 1, ind + n_ind, cfg);
             }
             else
-            {
-                cout << ind << "    " << "cin >> " << prefix << node->name;
-                cout << "[" << i << "];" << endl;
-            }
-            cout << ind << "}" << endl;
+                cout << ind + n_ind << cfg.get("fetch_array", node, prefix, i);
+            cout << ind << cfg.get("block_end", node);
             continue;
         }
         if(node->name[0] == '_')
         {
-            cout << ind << (node->type.size() ? node->type : "int");
-            cout << " " << node->name << ";" << endl;
-            cout << ind << "cin >> " << node->name << ";" << endl;
+            cout << ind << cfg.get("var_declaration", node);
+            cout << ind << cfg.get("fetch_var", node);
             continue;
         }
         if(node->children.size())
-            parser(node, prefix + node->name + ".", i + 1, ind);
+        {
+            string new_prefix = node->name + cfg.get("struct_element", node);
+            parser(node, prefix + new_prefix, i + 1, ind, cfg);
+        }
         else
-            cout << ind << "cin >> " << prefix << node->name << ";" << endl;
+            cout << ind << cfg.get("fetch_var", node, prefix);
     }
 }
 
 int main()
 {
+    Config cfg("cpp");
     vector<string> tokens;
     get_token(tokens, "goal");
     Node* root = generateSyntaxTree(tokens);
-    cout << "#include <iostream>" << endl;
-    cout << "#include <vector>" << endl;
-    cout << "using namespace std;" << endl;
-    declare(root, "");
-    cout << "int main()" << endl;
-    cout << "{" << endl;
-    parser(root, "", 'i', "    ");
-    cout << "}" << endl;
+    cout << cfg.get("include");
+    declare(root, "", cfg);
+    cout << endl;
+    cout << cfg.get("main_func");
+    cout << cfg.get("block_begin");
+    parser(root, "", 'i', cfg.get("indentation"), cfg);
+    cout << cfg.get("block_end");
 }

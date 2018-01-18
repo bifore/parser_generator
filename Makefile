@@ -9,7 +9,8 @@ MKDIR     = mkdir -p
 
 MAIN      = src/main.cpp
 
-SRC       =
+SRC       = src/config.cpp \
+            src/node.cpp   \
 
 BUILD_DIR = build
 
