@@ -153,11 +153,10 @@ int main()
     vector<string> tokens;
     get_token(tokens, "goal");
     Node* root = generateSyntaxTree(tokens);
-    cout << cfg.get("include");
+    cout << cfg.get("include", root);
     declare(root, cfg);
-    cout << endl;
-    cout << cfg.get("main_func_begin");
     shift_tree_depth(root);
+    cout << cfg.get("main_func_begin", root);
     parser(root, "", 'i', cfg);
-    cout << cfg.get("main_func_end");
+    cout << cfg.get("main_func_end", root);
 }
