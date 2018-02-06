@@ -46,7 +46,7 @@ Node* generateSyntaxTree(vector<string> &tokens)
 {
     Node* current_node = new Node();
     string type;
-    for(int i = 0; i < tokens.size(); ++i)
+    for(size_t i = 0; i < tokens.size(); ++i)
     {
         string token = tokens[i];
         if(token == "{")
@@ -147,11 +147,23 @@ void shift_tree_depth(Node* root)
     ++root->depth;
 }
 
-int main()
+void print_usage()
 {
-    Config cfg("python");
+    cout << "Usage :" << endl;
+    cout << "  parser_generator <lang> <input>" << endl;
+    cout << "Available languages : TODO" << endl;
+}
+
+int main(int argc, char** argv)
+{
+    if(argc != 3)
+    {
+        print_usage();
+        return 0;
+    }
+    Config cfg(argv[1]);
     vector<string> tokens;
-    get_token(tokens, "goal");
+    get_token(tokens, argv[2]);
     Node* root = generateSyntaxTree(tokens);
     cout << cfg.get("include", root);
     declare(root, cfg);

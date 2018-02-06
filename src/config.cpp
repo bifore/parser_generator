@@ -8,7 +8,7 @@ using namespace std;
 string replace_all(string &input, string s, string r)
 {
     string output(input);
-    for (int i = 0;;)
+    for (size_t i = 0;;)
     {
         i = output.find(s, i);
         if (i == string::npos)
