@@ -1,6 +1,6 @@
 CC        = g++
 NAME      = parser_generator
-CPPFLAGS  = -std=c++1z
+CPPFLAGS  = -std=c++1z -lstdc++fs
 CFLAGS    = -Wall -Wextra -Wpedantic -Wundef -g
 CFLAGS_R  = -Wall -Wextra -Wpedantic -Wundef -O2
 LDLIBS    =
@@ -9,8 +9,12 @@ MKDIR     = mkdir -p
 
 MAIN      = src/main.cpp
 
-SRC       = src/config.cpp \
-            src/node.cpp   \
+SRC       = src/config.cpp            \
+            src/node.cpp              \
+            src/cpp_jinja/context.cpp \
+            src/cpp_jinja/jinja.cpp   \
+            src/cpp_jinja/token.cpp   \
+            src/cpp_jinja/util.cpp    \
 
 BUILD_DIR = build
 

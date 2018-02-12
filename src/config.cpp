@@ -3,6 +3,9 @@
 #include <iostream>
 #include <fstream>
 
+#include "cpp_jinja/context.h"
+#include "cpp_jinja/jinja.h"
+
 using namespace std;
 
 string replace_all(string &input, string s, string r)
@@ -23,13 +26,22 @@ Config::Config(string name)
     string _path = "config/" + name + ".cfg";
     ifstream file(_path.c_str());
     string line;
+    string vname;
+    string value;
     while (getline(file, line))
     {
-        int sep = line.find('=');
-        string val_name = line.substr(0, sep);
-        string value = line.substr(sep + 1);
-        values[val_name] = replace_all(value, "\\n", "\n");
+        if(line[0] != ' ')
+        {
+            if(value.size() && vname.size())
+                values[vname] = value.substr(0, value.size() - 1);
+            vname = line;
+            value = "";
+            continue;
+        }
+        value += line.substr(4) + "\n";
     }
+    if(value.size() && vname.size())
+        values[vname] = value.substr(0, value.size() - 1);
     file.close();
 }
 
@@ -39,33 +51,36 @@ string Config::get(string name)
     return value;
 }
 
+jinja::Context get_context(Node* node, Config* config)
+{
+    jinja::Context* cnode = new jinja::Context();
+    string default_type = config->get("default_type");
+    cnode->set("type", node->type.size() ? node->type : default_type);
+    string shift, indentation = config->get("indentation");
+    cnode->set("depth", to_string(node->depth));
+    for(int i = 0; i < node->depth; ++i)
+        shift += indentation;
+    cnode->set("shift", shift);
+    cnode->set("size", node->array_length);
+    cnode->set("name", node->name);
+    jinja::Context context;
+    context.set("node", cnode);
+    return context;
+}
+
 string Config::get(string name, Node* node)
 {
     string value = values[name];
-    if(value.find("{{type}}") != string::npos)
-    {
-        string type = (node->type.size()
-                ? node->type
-                : get("default_type", node));
-        value = replace_all(value, "{{type}}", type);
-    }
-    if(value.find("{{shift}}") != string::npos)
-    {
-        string shift, indentation = get("indentation", node);
-        for(int i = 0; i < node->depth; ++i)
-            shift += indentation;
-        value = replace_all(value, "{{shift}}", shift);
-    }
-    value = replace_all(value, "{{size}}", node->array_length);
-    value = replace_all(value, "{{name}}", node->name);
-    return value;
+    jinja::Context context = get_context(node, this);
+    return jinja::parse(value, context);
 }
 
 string Config::get(string name, Node* node, char _iterator)
 {
-    string value = get(name, node);
-    value = replace_all(value, "{{iterator}}", string(1, _iterator));
-    return value;
+    string value = values[name];
+    jinja::Context context = get_context(node, this);
+    context.set("iterator", string(1, _iterator));
+    return jinja::parse(value, context);
 }
 
 string Config::get(string name, Node* node, string prefix)
@@ -78,9 +93,11 @@ string Config::get(string name, Node* node, string prefix)
 
 string Config::get(string name, Node* node, string prefix, char _iterator)
 {
+    string value = values[name];
     node->name = prefix + node->name;
-    string value = get(name, node);
+    jinja::Context context = get_context(node, this);
+    context.set("iterator", string(1, _iterator));
+    string result = jinja::parse(value, context);
     node->name = node->name.substr(prefix.size());
-    value = replace_all(value, "{{iterator}}", string(1, _iterator));
-    return value;
+    return result;
 }

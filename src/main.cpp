@@ -1,3 +1,4 @@
+#include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -9,6 +10,8 @@
 #include "node.h"
 
 using namespace std;
+
+namespace fs = std::experimental::filesystem;
 
 void get_token(vector<string> &tokens, string file_path)
 {
@@ -151,7 +154,13 @@ void print_usage()
 {
     cout << "Usage :" << endl;
     cout << "  parser_generator <lang> <input>" << endl;
-    cout << "Available languages : TODO" << endl;
+    cout << "Available languages : ";
+    vector<string> langs;
+    for (auto& p : fs::directory_iterator("config"))
+        langs.push_back(p.path().filename());
+    for(size_t i = 0; i < langs.size() - 1; ++i)
+        cout << langs[i].substr(0, langs[i].size() - 4) << ", ";
+    cout << langs[langs.size() - 1].substr(0, langs[langs.size() - 1].size() - 4) << endl;
 }
 
 int main(int argc, char** argv)
