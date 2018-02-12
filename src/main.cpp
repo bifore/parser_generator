@@ -156,7 +156,7 @@ void print_usage()
     cout << "  parser_generator <lang> <input>" << endl;
     cout << "Available languages : ";
     vector<string> langs;
-    for (auto& p : fs::directory_iterator("config"))
+    for (auto& p : fs::directory_iterator("/home/bfor/code/parser_generator/config"))
         langs.push_back(p.path().filename());
     for(size_t i = 0; i < langs.size() - 1; ++i)
         cout << langs[i].substr(0, langs[i].size() - 4) << ", ";
