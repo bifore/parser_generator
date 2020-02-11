@@ -63,19 +63,19 @@ Node* generateSyntaxTree(vector<string> &tokens)
                 current_node->children.back()->array_length = tokens[i - 1];
             }
         }
-        else if(tokens[i + 1] == ":")
+        else if(i + 1 < tokens.size() && tokens[i + 1] == ":")
         {
             type = token;
             ++i;
         }
-        else if(tokens[i + 1] == "[")
+        else if(i + 1 < tokens.size() && tokens[i + 1] == "[")
         {
             Node* new_node = new Node(token, type, current_node);
             type = "";
             current_node->children.push_back(new_node);
             ++i;
         }
-        else if(tokens[i + 1] == "]")
+        else if(i + 1 < tokens.size() && tokens[i + 1] == "]")
         {
             current_node->children.back()->array_length = token;
             ++i;
@@ -156,7 +156,7 @@ void print_usage()
     cout << "  parser_generator <lang> <input>" << endl;
     cout << "Available languages : ";
     vector<string> langs;
-    for (auto& p : fs::directory_iterator("/home/bfor/code/parser_generator/config"))
+    for (auto& p : fs::directory_iterator("./config"))
         langs.push_back(p.path().filename());
     for(size_t i = 0; i < langs.size() - 1; ++i)
         cout << langs[i].substr(0, langs[i].size() - 4) << ", ";

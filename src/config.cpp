@@ -23,7 +23,7 @@ string replace_all(string &input, string s, string r)
 
 Config::Config(string name)
 {
-    string _path = "/home/bfor/code/parser_generator/config/" + name + ".cfg";
+    string _path = "./config/" + name + ".cfg";
     ifstream file(_path.c_str());
     string line;
     string vname;

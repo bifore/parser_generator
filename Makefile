@@ -16,23 +16,23 @@ SRC       = src/config.cpp            \
             src/cpp_jinja/token.cpp   \
             src/cpp_jinja/util.cpp    \
 
-BUILD_DIR = build
+CONFIG_DIR = config
 
 all: $(NAME)
 
 release: $(NAME)_R
 
 $(NAME): $(SRC)
-	$(MKDIR) $(BUILD_DIR)
-	$(CC) -o $(BUILD_DIR)/$(NAME).o $(MAIN) $(SRC) $(CFLAGS) $(CPPFLAGS) \
+	$(MKDIR) $(CONFIG_DIR)
+	$(CC) -o $(NAME) $(MAIN) $(SRC) $(CFLAGS) $(CPPFLAGS) \
 	$(LDLIBS)
 
 $(NAME)_R: $(SRC)
-	$(MKDIR) $(BUILD_DIR)
-	$(CC) -o $(BUILD_DIR)/$(NAME).o $(MAIN) $(SRC) $(CFLAGS_R) \
+	$(MKDIR)  $(CONFIG_DIR)
+	$(CC) -o /$(NAME) $(MAIN) $(SRC) $(CFLAGS_R) \
 	$(CPPFLAGS) $(LDLIBS)
 
 clean:
-	$(RM) $(BUILD_DIR)/*.o
+	$(RM) $(BUILD_DIR)/*
 	rmdir $(BUILD_DIR)
 
