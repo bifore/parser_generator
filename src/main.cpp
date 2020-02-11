@@ -57,7 +57,7 @@ Node* generateSyntaxTree(vector<string> &tokens)
         else if(token == "}")
         {
             current_node = current_node->parent;
-            if(tokens[i + 1] == "[")
+            if(i + 1 < tokens.size() && tokens[i + 1] == "[")
             {
                 i += 3;
                 current_node->children.back()->array_length = tokens[i - 1];
